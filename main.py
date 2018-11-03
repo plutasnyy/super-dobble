@@ -1,9 +1,12 @@
-from skimage import io
-from matplotlib import pylab as plt
+import cv2
 
-plt.figure(figsize=(30, 30))
-for ind, i in enumerate(["easy1"]):
-    file_name = 'data/{}.jpg'.format(i)
-    img = io.imread(file_name)
-    plt.imshow(img, cmap="gray")
-    plt.show()
+from ImageProcessor import ImageProcessor
+from ImageReader import ImageReader
+
+imageProcessor = ImageProcessor()
+
+imageReader = ImageReader()
+image = imageReader.get_image()
+
+result = imageProcessor.process(image)
+
