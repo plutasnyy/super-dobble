@@ -97,7 +97,7 @@ class ImageProcessor(object):
             approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
             area = cv2.contourArea(contour)
             (cx, cy), radius = cv2.minEnclosingCircle(contour)
-            if ((len(approx) > 8) & (len(approx) < 23) & (area > 30)) and hierarchy[0][i][3] == -1:
+            if hierarchy[0][i][3] == 1:
                 contour_list.append(contour)
                 print(cx, cy, radius)
         cv2.drawContours(bgr_img, contour_list, -1, (255, 0, 0), 2)
