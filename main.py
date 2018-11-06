@@ -7,47 +7,44 @@ imageProcessor = ImageProcessor()
 
 imageReader = ImageReader()
 image = imageReader.get_image()
+im = cv2.imread("data/circles/2.JPG", cv2.IMREAD_GRAYSCALE)
+
 
 result = imageProcessor.process(image)
-#
-# img = cv2.imread("sample.png", cv2.IMREAD_GRAYSCALE)
-# ret, img  =cv2.threshold(img,122 ,255,cv2.THRESH_TOZERO)
-# img = cv2.medianBlur(img,5)
-# img = cv2.medianBlur(img,5)
-# img = cv2.medianBlur(img,5)
-# # Set up the detector with default parameters.
-#
-# # Setup SimpleBlobDetector parameters.
-# params = cv2.SimpleBlobDetector_Params()
-#
-# # # Change thresholds
-# params.minThreshold = 10
-# params.maxThreshold = 300
-#
-# # Filter by Area.
-# params.filterByArea = True
-# params.minArea = 90
-#
-# # Filter by Circularity
-# params.filterByCircularity = True
-# params.minCircularity = 0.01
-#
-# # Filter by Convexity
-# params.filterByConvexity = False
-# params.minConvexity = 0.87
-#
-# # Filter by Inertia
-# params.filterByInertia = False
-# params.minInertiaRatio = 0.01
-#
-# detector = cv2.SimpleBlobDetector_create(params)
-#
-# # Detect blobs.
-# keypoints = detector.detect(img)
-# print(keypoints)
-# # Draw detected blobs as red circles.
-# # cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
-# im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0, 0, 255))
-# # Show keypoints
-# cv2.imshow("Keypoints", im_with_keypoints)
-# cv2.waitKey(0)
+params = cv2.SimpleBlobDetector_Params()
+
+# Change thresholds
+params.minThreshold = 0;
+params.maxThreshold = 10000;
+
+# Filter by Area.
+params.filterByArea = True
+params.minArea = 1000
+params.maxArea = 200000
+
+# Filter by Circularity
+params.filterByCircularity = False
+params.minCircularity = 0.1
+
+# Filter by Convexity
+params.filterByConvexity = False
+params.maxConvexity=1
+
+# Filter by Inertia
+params.filterByInertia = False
+params.minInertiaRatio = 0.01
+
+detector = cv2.SimpleBlobDetector_create(params)
+# Set up the detector with default parameters.
+
+# Detect blobs.
+keypoints = detector.detect(im)
+
+# Draw detected blobs as red circles.
+# cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS ensures the size of the circle corresponds to the size of blob
+im_with_keypoints = cv2.drawKeypoints(im, keypoints, np.array([]), (0, 0, 255),
+                                      cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+# Show keypoints
+cv2.imshow("Keypoints", im_with_keypoints)
+cv2.waitKey(0)

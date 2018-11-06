@@ -84,12 +84,12 @@ class ImageProcessor(object):
         #
         # img = cv2.medianBlur(gray_image_with_contrast, 3)
         # bilateral_filtered_image = img
-        cv2.imshow('Bilateral', bgr_img)
-        cv2.waitKey(0)
+        # cv2.imshow('Bilateral', bgr_img)
+        # cv2.waitKey(0)
 
         edge_detected_image = cv2.Canny(bgr_img, 75, 200)
-        cv2.imshow('Edge', edge_detected_image)
-        cv2.waitKey(0)
+        # cv2.imshow('Edge', edge_detected_image)
+        # cv2.waitKey(0)
 
         image, contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contour_list = []
@@ -97,7 +97,7 @@ class ImageProcessor(object):
             approx = cv2.approxPolyDP(contour, 0.01 * cv2.arcLength(contour, True), True)
             area = cv2.contourArea(contour)
             (cx, cy), radius = cv2.minEnclosingCircle(contour)
-            if hierarchy[0][i][3] == 1:
+            if hierarchy[0][i][3] == -1:
                 contour_list.append(contour)
                 print(cx, cy, radius)
         cv2.drawContours(bgr_img, contour_list, -1, (255, 0, 0), 2)
