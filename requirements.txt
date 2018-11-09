@@ -4,7 +4,7 @@ dask==0.20.0
 decorator==4.3.0
 imutils==0.5.1
 kiwisolver==1.0.1
-matplotlib==3.0.1
+matplotlib
 networkx==2.2
 numpy==1.15.3
 opencv-python==3.4.3.18
