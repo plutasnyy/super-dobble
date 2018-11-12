@@ -2,7 +2,7 @@ from copy import deepcopy
 import imutils
 import numpy as np
 import cv2
-
+import matplotlib.pyplot as plt
 
 class Image(object):
 
@@ -97,11 +97,9 @@ def get_objects_list(img, conturous):
     return images_list
 
 
-def find_animal_on_circle(circle, type):
+def find_animal_on_circle(circle, pattern, type):
     MIN_MATCH_COUNT = 10
     FLANN_INDEX_KDTREE = 0
-
-    pattern = cv2.imread('data/{}.png'.format(type), 0)  # queryImage
 
     sift = cv2.xfeatures2d.SIFT_create()
     kp1, des1 = sift.detectAndCompute(pattern, None)
@@ -118,6 +116,8 @@ def find_animal_on_circle(circle, type):
         src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
         M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        if M is None:
+            return None
         h, w = pattern.shape
         pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
         dst = cv2.perspectiveTransform(pts, M)
@@ -150,30 +150,41 @@ def find_pair(center_circle, circle):
     return None, None
 
 
-img = get_image('easy/4')
+img = get_image('easy/11') #medium2 easy11
 
-img = resize_img(img, 1000)
+img = resize_img(img, 1200)
 circles_conturous = get_contours_from_img(img)
 
 circles_list = get_objects_list(img, circles_conturous)
-types = ['osiol', 'mewa']
+types_names = ['ant', 'bat', 'bear', 'beaver', 'buffalo', 'camel', 'capricorn', 'cat', 'catfish', 'cock', 'cow', 'crab',
+               'cricket', 'crocodile', 'dog', 'dolphin', 'donkey', 'duck', 'eagle', 'fish', 'flamingo', 'frog',
+               'gorilla', 'hedgehog', 'hippo', 'horse', 'jellyfish', 'kangaroo', 'lion', 'mosquito', 'mouse', 'octopus',
+               'orca',
+               'owl', 'pandabear', 'parrot', 'pelican', 'penguin', 'pig', 'pigeon', 'polarbear', 'rabbit', 'racoon',
+               'reindeer', 'scorpio', 'seagull', 'seahorse', 'seal', 'shark', 'sheep', 'sloth', 'squirrel', 'starfish',
+               'turtle', 'wolf', 'zebra']
+types = list()
+for name in types_names:
+    types.append([name, cv2.imread('data/animals/{}.png'.format(name), 0)])
 
 for ind, circle in enumerate(circles_list):
+    # print_image(circle.img)
     for type in types:
-        result = find_animal_on_circle(circle.img, type)
+        result = find_animal_on_circle(circle.img, type[1], type[0])
         if result is not None:
             circle.add_animal(result)
-    print(ind, circle.animals_list)
+    print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
 
 center_circle_index = get_center_circle(img, circles_list)
 center_circle = circles_list[center_circle_index]
 
 for ind, circle in enumerate(circles_list):
-    if ind == center_circle_index:
-        continue
-    p1, p2 = find_pair(center_circle, circle)
-    if p1 is not None:
-        cv2.line(img, p1, p2, (0, 255, 0), 2)
-
-print_image(img)
-
+    for ind2, circle2 in enumerate(circles_list):
+        if ind == ind2:
+            continue
+        p1, p2 = find_pair(circle2, circle)
+        if p1 is not None:
+            cv2.line(img, p1, p2, (0, 255, 0), 3)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.imshow(img)
+plt.show()
