@@ -60,13 +60,14 @@ def get_image(name):
 
 
 def get_contours_from_img(img):
-    img = cv2.bilateralFilter(img, 3, 175, 175)
+    # img = cv2.bilateralFilter(img, 3, 175, 175)
     img = cv2.medianBlur(img, 5)
     edge_detected_image = cv2.Canny(img, 75, 200)
     image, contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contour_list = list()
     for i, contour in enumerate(contours):
-        if hierarchy[0][i][3] == -1:
+        area = cv2.contourArea(contour)
+        if hierarchy[0][i][3] == -1 and area>100:
             contour_list.append(contour)
 
     return contour_list
@@ -148,7 +149,7 @@ def get_animals_from_circle(circleImage):
 
 
 def calculate_hu_diff(hu, hu1):
-    return sum([abs(hu[i] - hu1[i]) for i in range(7)])*1000
+    return sum([abs(hu[i] - hu1[i]) for i in range(7)]) * 1000
 
 
 def calculate_center_in_animal(circle, ind):
@@ -172,12 +173,13 @@ def compare_par_circles(circle1, circle2):
     return None
 
 
-img = get_image('easy/4')
+img = get_image('hard/1')
 img = resize_img(img, 1000)
 
 circles_conturous = get_contours_from_img(img)
 circles_list = get_objects_list(img, circles_conturous)
 
+print(len(circles_list))
 for circle in circles_list:
     animals_list = get_animals_from_circle(circle)
     circle.set_animals_list(animals_list)
@@ -189,6 +191,65 @@ for i in range(len(circles_list) - 1):
     for j in range(i + 1, len(circles_list)):
         result = compare_par_circles(circles_list[i], circles_list[j])
         if result is not None:
-            (a,b),(c,d) = result
+            (a, b), (c, d) = result
             cv2.line(img, (a, b), (c, d), (0, 255, 0), 2)
+
+
+def find_animal(img):
+    MIN_MATCH_COUNT = 10
+
+    img1 = cv2.imread('data/osiol.png', 0)  # queryImage
+    img2 = img  # trainImage
+
+    # Initiate SIFT detector
+    sift = cv2.xfeatures2d.SIFT_create()
+
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
+
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+    search_params = dict(checks=50)
+
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+    matches = flann.knnMatch(des1, des2, k=2)
+
+    # store all the good matches as per Lowe's ratio test.
+    good = []
+    for m, n in matches:
+        if m.distance < 0.7 * n.distance:
+            good.append(m)
+    if len(good) > MIN_MATCH_COUNT:
+        src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        # if M is None:
+        #     return
+        matchesMask = mask.ravel().tolist()
+
+        h, w = img1.shape
+        pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
+        dst = cv2.perspectiveTransform(pts, M)
+
+        img2 = cv2.polylines(img2, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
+        print_image(img2)
+    else:
+        matchesMask = None
+    draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
+                       singlePointColor=None,
+                       matchesMask=matchesMask,  # draw only inliers
+                       flags=2)
+
+    # img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+
+    # plt.imshow(img3, 'gray'), plt.show()
+
+
+
+for circle in circles_list:
+    find_animal(circle.img)
+
 print_image(img)
