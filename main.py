@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+
 class Image(object):
 
     def __init__(self, img, cx, cy, radius):
@@ -14,10 +15,10 @@ class Image(object):
         self.animals_list = list()
 
     def add_animal(self, animal):
-        point, type = animal
+        point, type, goods = animal
         x = self.cx - self.radius + point[0]
         y = self.cy - self.radius + point[1]
-        self.animals_list.append([(int(x), int(y)), type])
+        self.animals_list.append([(int(x), int(y)), type, goods])
 
 
 def resize_img(img, size=500):
@@ -97,7 +98,13 @@ def get_objects_list(img, conturous):
     return images_list
 
 
-def find_animal_on_circle(circle, pattern, type):
+def is_point_in_circle(point, circle):
+    height, width = circle.img.shape[:2]
+    return (point[0] - width / 2) ** 2 + (point[1] - height / 2) ** 2 < circle.radius ** 2
+
+
+def find_animal_on_circle(image, pattern, type):
+    circle = image.img
     MIN_MATCH_COUNT = 10
     FLANN_INDEX_KDTREE = 0
 
@@ -123,7 +130,9 @@ def find_animal_on_circle(circle, pattern, type):
         dst = cv2.perspectiveTransform(pts, M)
         cx = sum([x[0][0] for x in dst]) / 4
         cy = sum([y[0][1] for y in dst]) / 4
-        return (cx, cy), type
+        if is_point_in_circle((cx, cy), image):
+            return (cx, cy), type, len(good)
+        return None
     return None
 
 
@@ -146,11 +155,11 @@ def find_pair(center_circle, circle):
     for center_animal in center_circle.animals_list:
         for other_animal in circle.animals_list:
             if center_animal[1] == other_animal[1]:
-                return center_animal[0], other_animal[0]
-    return None, None
+                return center_animal[0], other_animal[0], center_animal[1]
+    return None, None, None
 
 
-img = get_image('easy/11') #medium2 easy11
+img = get_image('hard/3')  # medium2 easy11
 
 img = resize_img(img, 1200)
 circles_conturous = get_contours_from_img(img)
@@ -170,9 +179,10 @@ for name in types_names:
 for ind, circle in enumerate(circles_list):
     # print_image(circle.img)
     for type in types:
-        result = find_animal_on_circle(circle.img, type[1], type[0])
+        result = find_animal_on_circle(circle, type[1], type[0])
         if result is not None:
             circle.add_animal(result)
+    circle.animals_list = sorted(circle.animals_list, key=lambda x: x[2], reverse=True)[:8]
     print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
 
 center_circle_index = get_center_circle(img, circles_list)
@@ -182,8 +192,9 @@ for ind, circle in enumerate(circles_list):
     for ind2, circle2 in enumerate(circles_list):
         if ind == ind2:
             continue
-        p1, p2 = find_pair(circle2, circle)
+        p1, p2, type = find_pair(circle2, circle)
         if p1 is not None:
+            print(type)
             cv2.line(img, p1, p2, (0, 255, 0), 3)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 plt.imshow(img)
