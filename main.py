@@ -2,7 +2,6 @@ from copy import deepcopy
 import imutils
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
 
 class Image(object):
@@ -52,21 +51,35 @@ def add_contrast_to_gray_img(img):
 
 def get_image(name):
     file_name = 'data/{}.JPG'.format(name)
+    print(file_name)
     img = cv2.imread(file_name)
     return img
 
 
 def get_contours_from_img(img):
+    new_img = img.copy()
+    avg_light = np.average(cv2.cvtColor(new_img, cv2.COLOR_BGR2HSV)[:, :, 2])
+    print(avg_light)
+    threshold = 140
+    if avg_light > 140:
+        threshold = 140 + (avg_light - 140) * 3 / 4
+
+    print(threshold)
     # img = cv2.bilateralFilter(img, 3, 175, 175)
-    img = cv2.medianBlur(img, 5)
-    edge_detected_image = cv2.Canny(img, 75, 200)
-    image, contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    new_img = cv2.medianBlur(new_img, 5)
+    new_img = cv2.cvtColor(new_img, cv2.COLOR_BGR2GRAY)
+    ret, new_img = cv2.threshold(new_img, threshold, 255, 0)
+    image = None
+    # edge_detected_image = cv2.Canny(img, 75, 200)
+    image, contours, hierarchy = cv2.findContours(new_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
     contour_list = list()
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
-        if hierarchy[0][i][3] == -1 and area > 100:
+        if hierarchy[0][i][3] == -1 and area > 300:
             contour_list.append(contour)
-
+    cv2.drawContours(img, contour_list, -1, (255, 0, 0), 5)
+    # print_image(img)
     return contour_list
 
 
@@ -111,6 +124,8 @@ def find_animal_on_circle(image, pattern, type):
     sift = cv2.xfeatures2d.SIFT_create()
     kp1, des1 = sift.detectAndCompute(pattern, None)
     kp2, des2 = sift.detectAndCompute(circle, None)
+    if des2 is None:
+        return None
     index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
     search_params = dict(checks=50)
     flann = cv2.FlannBasedMatcher(index_params, search_params)
@@ -130,7 +145,7 @@ def find_animal_on_circle(image, pattern, type):
         dst = cv2.perspectiveTransform(pts, M)
         cx = sum([x[0][0] for x in dst]) / 4
         cy = sum([y[0][1] for y in dst]) / 4
-        if is_point_in_circle((cx, cy), image):
+        if is_point_in_circle((cx, cy), image) and cx > 0 and cy > 0:
             return (cx, cy), type, len(good)
         return None
     return None
@@ -159,12 +174,6 @@ def find_pair(center_circle, circle):
     return None, None, None
 
 
-img = get_image('hard/3')  # medium2 easy11
-
-img = resize_img(img, 1200)
-circles_conturous = get_contours_from_img(img)
-
-circles_list = get_objects_list(img, circles_conturous)
 types_names = ['ant', 'bat', 'bear', 'beaver', 'buffalo', 'camel', 'capricorn', 'cat', 'catfish', 'cock', 'cow', 'crab',
                'cricket', 'crocodile', 'dog', 'dolphin', 'donkey', 'duck', 'eagle', 'fish', 'flamingo', 'frog',
                'gorilla', 'hedgehog', 'hippo', 'horse', 'jellyfish', 'kangaroo', 'lion', 'mosquito', 'mouse', 'octopus',
@@ -172,30 +181,57 @@ types_names = ['ant', 'bat', 'bear', 'beaver', 'buffalo', 'camel', 'capricorn', 
                'owl', 'pandabear', 'parrot', 'pelican', 'penguin', 'pig', 'pigeon', 'polarbear', 'rabbit', 'racoon',
                'reindeer', 'scorpio', 'seagull', 'seahorse', 'seal', 'shark', 'sheep', 'sloth', 'squirrel', 'starfish',
                'turtle', 'wolf', 'zebra']
-types = list()
-for name in types_names:
-    types.append([name, cv2.imread('data/animals/{}.png'.format(name), 0)])
 
-for ind, circle in enumerate(circles_list):
-    # print_image(circle.img)
-    for type in types:
-        result = find_animal_on_circle(circle, type[1], type[0])
-        if result is not None:
-            circle.add_animal(result)
-    circle.animals_list = sorted(circle.animals_list, key=lambda x: x[2], reverse=True)[:8]
-    print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
+font = cv2.FONT_HERSHEY_SIMPLEX
+fontScale = 2
+fontColor = (50, 0, 130)
+lineType = 3
+level = ['easy','medium','hard']
+quantity = [15, 13, 33]
 
-center_circle_index = get_center_circle(img, circles_list)
-center_circle = circles_list[center_circle_index]
+for i in range(3):
+    level = level[i]
+    for j in range(1,quantity[i]+1):
+        number = j
+        img = get_image('{}/{}'.format(level, j))  # medium2 easy11
+        img = resize_img(img, 1200)
+        circles_conturous = get_contours_from_img(img.copy())
 
-for ind, circle in enumerate(circles_list):
-    for ind2, circle2 in enumerate(circles_list):
-        if ind == ind2:
-            continue
-        p1, p2, type = find_pair(circle2, circle)
-        if p1 is not None:
-            print(type)
-            cv2.line(img, p1, p2, (0, 255, 0), 3)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-plt.imshow(img)
-plt.show()
+        circles_list = get_objects_list(img, circles_conturous)
+        types = list()
+        for name in types_names:
+            types.append([name, cv2.imread('data/animals/{}.png'.format(name), 0)])
+
+        for ind, circle in enumerate(circles_list):
+            # print_image(circle.img)
+            for type in types:
+                result = find_animal_on_circle(circle, type[1], type[0])
+                if result is not None:
+                    circle.add_animal(result)
+            circle.animals_list = sorted(circle.animals_list, key=lambda x: x[2], reverse=True)[:8]
+            print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
+
+        center_circle_index = get_center_circle(img, circles_list)
+        print(center_circle_index)
+        center_circle = circles_list[center_circle_index]
+
+        for ind, circle in enumerate(circles_list):
+            for animal in circle.animals_list:
+                if animal[1] in ['parrot', 'cock','donkey']:
+                    x,y = animal[0]
+                    y+=10
+                    bottomLeftCornerOfText= (x,y)
+                    cv2.putText(img, animal[1],
+                                bottomLeftCornerOfText,
+                                font,
+                                fontScale,
+                                fontColor,
+                                lineType)
+            if ind == center_circle_index:
+                continue
+            p1, p2, type = find_pair(center_circle, circle)
+            if p1 is not None:
+                print(type)
+                cv2.line(img, p1, p2, (0, 255, 0), 3)
+
+        cv2.imwrite("{}_{}_output.jpg".format(level, j), img)
