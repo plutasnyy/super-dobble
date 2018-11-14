@@ -186,12 +186,12 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 fontScale = 2
 fontColor = (50, 0, 130)
 lineType = 3
-level = ['easy','medium','hard']
+level = ['easy', 'medium', 'hard']
 quantity = [15, 13, 33]
 
 for i in range(3):
     level = level[i]
-    for j in range(1,quantity[i]+1):
+    for j in range(1, quantity[i] + 1):
         number = j
         img = get_image('{}/{}'.format(level, j))  # medium2 easy11
         img = resize_img(img, 1200)
@@ -217,10 +217,10 @@ for i in range(3):
 
         for ind, circle in enumerate(circles_list):
             for animal in circle.animals_list:
-                if animal[1] in ['parrot', 'cock','donkey']:
-                    x,y = animal[0]
-                    y+=10
-                    bottomLeftCornerOfText= (x,y)
+                if animal[1] in ['parrot', 'cock', 'donkey']:
+                    x, y = animal[0]
+                    y += 10
+                    bottomLeftCornerOfText = (x, y)
                     cv2.putText(img, animal[1],
                                 bottomLeftCornerOfText,
                                 font,
