@@ -1,17 +1,14 @@
 # Super Dobble!
 Your best cheat for looking for pairs in Dobble. This is the application that can find pairs between dobble cards on the image using OpenCV2 and SIFT in Python.
 
-#####Result:
+######Result:
 
 ![Screenshot](data/output/easy_4.jpg)
 
-#####Steps:
+######Steps:
 
-*Take a photo:
-
-![Screenshot](data/processing/1.JPG)
-
-*Count average light and set threshold:
+-Take a photo:![Screenshot](data/processing/1.JPG)
+-Count average light and set threshold:
 
 ```
 avgLight>140 threshold = 140 + (avgLight-140) * 3/4
