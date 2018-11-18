@@ -189,49 +189,46 @@ lineType = 3
 level = ['easy','medium','hard']
 quantity = [15,13,33]
 
-for i in range(3):
-    level = level[i]
-    for j in range(1, quantity[i] + 1):
-        number = j
-        img = get_image('{}/{}'.format(level, j))  # medium2 easy11
-        img = resize_img(img, 1200)
-        circles_conturous = get_contours_from_img(img.copy())
+for i in range(31):
+    img = get_image('{}/{}'.format('old', i+1))  # medium2 easy11
+    img = resize_img(img, 1200)
+    circles_conturous = get_contours_from_img(img.copy())
 
-        circles_list = get_objects_list(img, circles_conturous)
-        types = list()
-        for name in types_names:
-            types.append([name, cv2.imread('data/animals/{}.png'.format(name), 0)])
+    circles_list = get_objects_list(img, circles_conturous)
+    types = list()
+    for name in types_names:
+        types.append([name, cv2.imread('data/animals/{}.png'.format(name), 0)])
 
-        for ind, circle in enumerate(circles_list):
-            # print_image(circle.img)
-            for type in types:
-                result = find_animal_on_circle(circle, type[1], type[0])
-                if result is not None:
-                    circle.add_animal(result)
-            circle.animals_list = sorted(circle.animals_list, key=lambda x: x[2], reverse=True)[:8]
-            print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
+    for ind, circle in enumerate(circles_list):
+        # print_image(circle.img)
+        for type in types:
+            result = find_animal_on_circle(circle, type[1], type[0])
+            if result is not None:
+                circle.add_animal(result)
+        circle.animals_list = sorted(circle.animals_list, key=lambda x: x[2], reverse=True)[:8]
+        print(ind, "({})".format(len(circle.animals_list)), circle.animals_list)
 
-        center_circle_index = get_center_circle(img, circles_list)
-        print(center_circle_index)
-        center_circle = circles_list[center_circle_index]
+    center_circle_index = get_center_circle(img, circles_list)
+    print(center_circle_index)
+    center_circle = circles_list[center_circle_index]
 
-        for ind, circle in enumerate(circles_list):
-            for animal in circle.animals_list:
-                if animal[1] in ['parrot', 'chicken', 'donkey']:
-                    x, y = animal[0]
-                    y += 10
-                    bottomLeftCornerOfText = (x, y)
-                    cv2.putText(img, animal[1],
-                                bottomLeftCornerOfText,
-                                font,
-                                fontScale,
-                                fontColor,
-                                lineType)
-            if ind == center_circle_index:
-                continue
-            p1, p2, type = find_pair(center_circle, circle)
-            if p1 is not None:
-                print(type)
-                cv2.line(img, p1, p2, (0, 255, 0), 3)
+    for ind, circle in enumerate(circles_list):
+        for animal in circle.animals_list:
+            if animal[1] in ['parrot', 'chicken', 'donkey']:
+                x, y = animal[0]
+                y += 10
+                bottomLeftCornerOfText = (x, y)
+                cv2.putText(img, animal[1],
+                            bottomLeftCornerOfText,
+                            font,
+                            fontScale,
+                            fontColor,
+                            lineType)
+        if ind == center_circle_index:
+            continue
+        p1, p2, type = find_pair(center_circle, circle)
+        if p1 is not None:
+            print(type)
+            cv2.line(img, p1, p2, (0, 255, 0), 3)
 
-        cv2.imwrite("{}_{}_output.jpg".format(level, j), img)
+    cv2.imwrite("{}_{}_output.jpg".format("old", i), img)
