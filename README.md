@@ -3,7 +3,8 @@ Your best cheat for looking for pairs in Dobble
 This is the application that can find pairs between dobble cards on the image using OpenCV2 and SIFT in Python.
 
 Result:
-![Screenshot](data/output/easy_4_output.jpg)
+
+![Screenshot](data/output/easy_4.jpg)
 
 Steps:
 Take a photo:
